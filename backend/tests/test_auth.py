@@ -123,7 +123,7 @@ class TestAuthentication:
         
         response = client.post('/api/auth/register', json=invalid_data)
         
-        assert response.status_code == 400  # Bad request for invalid password
+        assert response.status_code == 422  # Validation error for invalid password
     
     def test_login_with_email_success(self, client):
         """Test successful login with email."""
@@ -228,3 +228,66 @@ class TestAuthentication:
         data = response.get_json()
         assert 'message' in data
         assert 'Logout successful' in data['message']
+    
+    def test_register_missing_required_fields_fails(self, client):
+        """Test registration with missing required fields."""
+        incomplete_data = {
+            'email': 'test@test.com',
+            'username': 'testuser'
+            # Missing password and other required fields
+        }
+        
+        response = client.post('/api/auth/register', json=incomplete_data)
+        
+        assert response.status_code == 422  # Unprocessable Entity
+    
+    def test_register_invalid_email_format_fails(self, client):
+        """Test registration with invalid email format."""
+        invalid_email_data = {
+            'email': 'not-an-email',
+            'username': 'testuser',
+            'password': 'ValidPass123',
+            'full_name': 'Test User',
+            'sex': 'MALE',
+            'phone_number': '555-1234',
+            'address_line_1': '123 Test St',
+            'city': 'Test City',
+            'state_province_code': 'TC',
+            'country_code': 'US',
+            'postal_code': '12345'
+        }
+        
+        response = client.post('/api/auth/register', json=invalid_email_data)
+        
+        assert response.status_code == 422  # Validation error
+    
+    def test_register_invalid_sex_value_fails(self, client):
+        """Test registration with invalid sex enum value."""
+        invalid_sex_data = {
+            'email': 'test@test.com',
+            'username': 'testuser',
+            'password': 'ValidPass123',
+            'full_name': 'Test User',
+            'sex': 'INVALID',  # Not MALE, FEMALE, or OTHER
+            'phone_number': '555-1234',
+            'address_line_1': '123 Test St',
+            'city': 'Test City',
+            'state_province_code': 'TC',
+            'country_code': 'US',
+            'postal_code': '12345'
+        }
+        
+        response = client.post('/api/auth/register', json=invalid_sex_data)
+        
+        assert response.status_code == 422  # Validation error
+    
+    def test_login_empty_credentials_fails(self, client):
+        """Test login with empty credentials."""
+        empty_data = {
+            'login': '',
+            'password': ''
+        }
+        
+        response = client.post('/api/auth/login', json=empty_data)
+        
+        assert response.status_code in [401, 422]  # Either unauthorized or validation error

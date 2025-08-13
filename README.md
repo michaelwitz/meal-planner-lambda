@@ -160,6 +160,8 @@ docker-compose logs -f
 docker-compose down
 ```
 
+**Note**: The project name is set to `meal-planner` in the `.env` file to ensure consistent Docker resource naming regardless of the directory name.
+
 ### Quick Start
 
 ```bash
