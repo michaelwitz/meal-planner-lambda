@@ -51,16 +51,16 @@ class User(db.Model):
     
     # Profile fields
     full_name = Column(String(255), nullable=False)
-    sex = Column(String(20), nullable=True)  # MALE, FEMALE, OTHER
+    sex = Column(String(20), nullable=False)  # MALE, FEMALE, OTHER - Required
     phone_number = Column(String(50), nullable=True)
     
     # Address fields
-    address_line_1 = Column(String(255), nullable=True)
+    address_line_1 = Column(String(255), nullable=False)  # Required
     address_line_2 = Column(String(255), nullable=True)
-    city = Column(String(100), nullable=True)
-    state_province_code = Column(String(10), nullable=True)
-    country_code = Column(String(2), nullable=True)
-    postal_code = Column(String(20), nullable=True)
+    city = Column(String(100), nullable=False)  # Required
+    state_province_code = Column(String(10), nullable=False)  # Required
+    country_code = Column(String(2), nullable=False)  # Required
+    postal_code = Column(String(20), nullable=False)  # Required
     
     # Timestamps
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)

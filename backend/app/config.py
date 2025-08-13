@@ -28,10 +28,13 @@ class Config:
     if not JWT_SECRET_KEY:
         raise ValueError("JWT_SECRET_KEY environment variable is not set")
     
-    JWT_ACCESS_TOKEN_EXPIRES = int(os.getenv('JWT_ACCESS_TOKEN_EXPIRES', 86400))
+    JWT_ACCESS_TOKEN_EXPIRES_STR = os.getenv('JWT_ACCESS_TOKEN_EXPIRES')
+    if not JWT_ACCESS_TOKEN_EXPIRES_STR:
+        raise ValueError("JWT_ACCESS_TOKEN_EXPIRES environment variable is not set")
+    JWT_ACCESS_TOKEN_EXPIRES = int(JWT_ACCESS_TOKEN_EXPIRES_STR)
     
-    # API
-    API_PREFIX = os.getenv('API_PREFIX', '/api')
+    # API - Hardcoded as part of application design
+    API_PREFIX = '/api'
 
 
 class DevelopmentConfig(Config):
