@@ -40,12 +40,13 @@ def create_app(config_name=None):
         db.create_all()
     
     # Register blueprints
-    # TODO: Add blueprints here once created
-    # from .blueprints.auth import auth_bp
-    # from .blueprints.users import users_bp
-    # from .blueprints.meals import meals_bp
-    # 
-    # app.register_blueprint(auth_bp, url_prefix=f"{app.config['API_PREFIX']}/auth")
+    from .blueprints.auth.routes import auth_bp
+    
+    app.register_blueprint(auth_bp, url_prefix=f"{app.config['API_PREFIX']}/auth")
+    
+    # TODO: Add more blueprints as they are created
+    # from .blueprints.users.routes import users_bp
+    # from .blueprints.meals.routes import meals_bp
     # app.register_blueprint(users_bp, url_prefix=f"{app.config['API_PREFIX']}/users")
     # app.register_blueprint(meals_bp, url_prefix=f"{app.config['API_PREFIX']}/meals")
     

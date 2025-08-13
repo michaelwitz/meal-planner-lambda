@@ -170,7 +170,7 @@ A comprehensive meal planning application that allows users to create, manage, a
 ### Infrastructure
 - Docker Compose for local development
 - PostgreSQL on port 5455 (configurable)
-- API on port 5000
+- API on port 8088
 - Frontend on port 3000 (future)
 
 ## Success Metrics
