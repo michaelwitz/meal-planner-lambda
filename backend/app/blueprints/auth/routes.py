@@ -2,7 +2,7 @@
 
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from flask_pydantic import validate
+from app.utils.validation import validate_with_422 as validate
 from app.schemas.user_schemas import (
     UserRegisterSchema, 
     UserLoginSchema, 

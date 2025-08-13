@@ -39,6 +39,23 @@ def create_app(config_name=None):
         # Create all tables
         db.create_all()
     
+    # Register error handlers
+    from werkzeug.exceptions import BadRequest
+    from pydantic import ValidationError
+    
+    @app.errorhandler(BadRequest)
+    def handle_bad_request(e):
+        """Handle validation errors with proper status code."""
+        # Check if this is a Pydantic validation error from flask-pydantic
+        if hasattr(e, 'description') and 'validation error' in str(e.description).lower():
+            return {'error': 'Validation Error', 'details': e.description}, 422
+        return {'error': str(e.description)}, 400
+    
+    @app.errorhandler(ValidationError)
+    def handle_validation_error(e):
+        """Handle Pydantic validation errors."""
+        return {'error': 'Validation Error', 'details': e.errors()}, 422
+    
     # Register blueprints
     from .blueprints.auth.routes import auth_bp
     

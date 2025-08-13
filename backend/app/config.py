@@ -53,8 +53,12 @@ class TestingConfig(Config):
     """Testing configuration."""
     DEBUG = True
     TESTING = True
-    # Use the same PostgreSQL, tests should handle their own cleanup
-    # or use a separate test database specified in TEST_DATABASE_URL
+    
+    # Override database URL for testing
+    TEST_DATABASE_URL = os.getenv('TEST_DATABASE_URL')
+    if TEST_DATABASE_URL:
+        SQLALCHEMY_DATABASE_URI = TEST_DATABASE_URL
+    # If TEST_DATABASE_URL not set, will use regular DATABASE_URL from parent Config
 
 
 # Configuration dictionary
