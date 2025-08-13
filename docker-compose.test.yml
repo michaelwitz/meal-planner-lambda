@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  test-db:
+    image: postgres:15-alpine
+    container_name: meal_planner_test_db
+    environment:
+      POSTGRES_DB: meal_planner_test_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5456:5432"  # Different port for test database
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d meal_planner_test_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - meal_planner_test_network
+    # Use tmpfs for faster test execution (data doesn't persist)
+    tmpfs:
+      - /var/lib/postgresql/data
+
+networks:
+  meal_planner_test_network:
+    driver: bridge
