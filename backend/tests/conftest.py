@@ -1,10 +1,17 @@
 """
 Pytest fixtures for test setup using PostgreSQL test database.
 
-To run tests:
+To run tests with local database:
 1. Start the test database: docker-compose -f docker-compose.test.yml up -d
-2. Run tests: pytest
+2. Run tests: pytest  (or TEST_DB_TARGET=local pytest)
 3. Stop test database: docker-compose -f docker-compose.test.yml down
+
+To run tests with cloud database:
+1. Ensure cloud database credentials are in .env file
+2. Run tests: TEST_DB_TARGET=cloud pytest
+
+To specify database target via command line:
+pytest --db-target=local  (or --db-target=cloud)
 """
 
 import pytest
@@ -13,22 +20,59 @@ from app import create_app
 from app.models.database import db
 from app.models.entities import User
 import bcrypt
+from tests.db_config import TestDatabaseConfig, get_test_database_url
+
+
+def pytest_addoption(parser):
+    """
+    Add custom command-line options to pytest.
+    
+    This allows running tests with:
+    pytest --db-target=local
+    pytest --db-target=cloud
+    """
+    parser.addoption(
+        "--db-target",
+        action="store",
+        default=None,
+        help="Database target for tests: local or cloud (default: uses TEST_DB_TARGET env var or 'local')"
+    )
+
+
+@pytest.fixture(scope='session')
+def db_target(request):
+    """
+    Get the database target from command-line option or environment.
+    
+    Priority:
+    1. Command-line option (--db-target)
+    2. TEST_DB_TARGET environment variable
+    3. Default to 'local'
+    """
+    return request.config.getoption("--db-target")
 
 
 @pytest.fixture(scope='function')
-def app():
+def app(db_target):
     """
     Create a Flask app configured for testing with PostgreSQL.
     
     This fixture:
-    1. Uses TEST_DATABASE_URL from environment
+    1. Uses database URL based on db_target (local or cloud)
     2. Configures the app for testing
     3. Creates all tables in test database
     4. Yields the app for testing
-    5. Drops all tables after test
+    5. Drops all tables after test (only for local database)
     
     scope='function' means this runs for each test function
     """
+    # Get database URL based on target
+    database_url = get_test_database_url(db_target)
+    is_cloud = TestDatabaseConfig.is_cloud_database(db_target)
+    
+    # Set the database URL in environment for the app to use
+    os.environ['TEST_DATABASE_URL'] = database_url
+    
     # Create app with test config (will use TEST_DATABASE_URL)
     app = create_app('testing')
     

@@ -2,12 +2,41 @@
 
 ## Overview
 This directory contains all unit and integration tests for the Meal Planner API.
+Tests can be run against either a local Docker PostgreSQL database or a cloud AWS Aurora database.
 
 ## Test Structure
 - `conftest.py` - Pytest fixtures and test configuration
+- `db_config.py` - Database configuration for local and cloud testing
+- `run_tests.py` - Convenient test runner script for database selection
 - `test_auth.py` - Authentication endpoint tests
 
-## Running Tests
+## Database Configuration
+
+### Setting Up Environment Variables
+The test database URLs are configured in your `.env` file in the project root.
+
+**Required environment variables:**
+- `TEST_DATABASE_URL_LOCAL` - Local Docker PostgreSQL connection string
+- `TEST_DATABASE_URL_CLOUD` - AWS Aurora Serverless PostgreSQL connection string  
+- `TEST_DB_TARGET` - Default target: `local` or `cloud` (defaults to `local`)
+
+**Note:** The `.env` file is already configured with both local and cloud database connections.
+
+## Using the Test Runner Script
+
+The `run_tests.py` script provides a convenient way to run tests with different databases:
+
+```bash
+# From the backend directory
+python tests/run_tests.py                    # Run with local database (default)
+python tests/run_tests.py --cloud            # Run with cloud database
+python tests/run_tests.py --check            # Check database connections
+python tests/run_tests.py --cloud --verbose  # Cloud database with verbose output
+python tests/run_tests.py --coverage         # Run with coverage report
+python tests/run_tests.py --file tests/test_auth.py  # Run specific test file
+```
+
+## Running Tests with Local Database
 
 ### Prerequisites
 1. Activate the Python environment:
@@ -15,15 +44,21 @@ This directory contains all unit and integration tests for the Meal Planner API.
    conda activate meal-planner
    ```
 
-2. Start the test database:
+2. Start the local test database:
    ```bash
    docker-compose -f docker-compose.test.yml up -d
    ```
 
-### Run All Tests
+### Run Tests with Local Database
 ```bash
-# From the backend directory
+# Uses local database by default
 pytest
+
+# Explicitly specify local database
+pytest --db-target=local
+
+# Or use environment variable
+TEST_DB_TARGET=local pytest
 
 # With verbose output
 pytest -v
@@ -31,6 +66,37 @@ pytest -v
 # With coverage report
 pytest --cov=app --cov-report=term-missing
 ```
+
+## Running Tests with Cloud Database
+
+### Prerequisites
+1. Ensure cloud database credentials are in your `.env` file
+2. Ensure you can connect to the AWS Aurora database
+   ```bash
+   # Test connection (optional)
+   psql -h meal-planner-db.cluster-cczg0cscuj55.us-east-1.rds.amazonaws.com -U postgres_admin -d meal_planner_test
+   ```
+
+### Run Tests with Cloud Database
+```bash
+# Using command-line option
+pytest --db-target=cloud
+
+# Using environment variable
+TEST_DB_TARGET=cloud pytest
+
+# With verbose output
+pytest --db-target=cloud -v
+
+# Run specific test file with cloud database
+pytest --db-target=cloud tests/test_auth.py -v
+```
+
+### ⚠️ Cloud Database Notes
+- The cloud database will be completely dropped and recreated for each test
+- Make sure this is a dedicated test database, not production
+- Tests may run slower due to network latency
+- Ensure stable internet connection for consistent test results
 
 ### Run Specific Test Files
 ```bash
