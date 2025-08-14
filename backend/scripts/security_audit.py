@@ -102,29 +102,38 @@ class SecurityAuditor:
             )
             
             # Parse JSON output
+            vulnerabilities = []
             if result.stdout:
                 try:
-                    vulnerabilities = json.loads(result.stdout)
+                    data = json.loads(result.stdout)
+                    # pip-audit returns data in {"dependencies": [...], "fixes": []}
+                    if isinstance(data, dict) and 'dependencies' in data:
+                        # Filter only packages with vulnerabilities
+                        for dep in data['dependencies']:
+                            if dep.get('vulns'):
+                                vulnerabilities.append(dep)
                 except json.JSONDecodeError:
-                    vulnerabilities = []
-            else:
-                vulnerabilities = []
+                    pass
             
             if not vulnerabilities:
                 print(f"{Colors.GREEN}  ✅ No vulnerabilities found with pip-audit{Colors.RESET}")
                 return False, []
             else:
-                vuln_count = len(vulnerabilities)
-                print(f"{Colors.RED}  ⚠️  Found {vuln_count} vulnerabilities with pip-audit{Colors.RESET}")
+                # Count total vulnerabilities
+                total_vulns = sum(len(pkg.get('vulns', [])) for pkg in vulnerabilities)
+                print(f"{Colors.RED}  ⚠️  Found {total_vulns} vulnerabilities in {len(vulnerabilities)} packages{Colors.RESET}")
                 
                 for vuln in vulnerabilities:
                     print(f"\n  {Colors.YELLOW}Package:{Colors.RESET} {vuln['name']} {vuln['version']}")
                     for v in vuln.get('vulns', []):
                         print(f"    {Colors.RED}ID:{Colors.RESET} {v['id']}")
-                        desc = v.get('description', 'No description')[:100]
+                        if 'aliases' in v and v['aliases']:
+                            print(f"    {Colors.YELLOW}CVE:{Colors.RESET} {', '.join(v['aliases'])}")
+                        desc = v.get('description', 'No description')[:150]
                         print(f"    {Colors.RESET}Description: {desc}...")
                         if 'fix_versions' in v and v['fix_versions']:
-                            print(f"    {Colors.GREEN}Fix:{Colors.RESET} Upgrade to {v['fix_versions'][0]}")
+                            fix_ver = v['fix_versions'][0] if v['fix_versions'] else 'Unknown'
+                            print(f"    {Colors.GREEN}Fix:{Colors.RESET} Upgrade to {fix_ver}")
                 
                 return True, vulnerabilities
                 
@@ -331,7 +340,8 @@ class SecurityAuditor:
         # Quick mode - only run pip-audit
         if quick:
             has_vulns, vulns = self.run_pip_audit(fix=fix)
-            pip_vulns = len(vulns) if has_vulns else 0
+            # Count total vulnerabilities, not just packages
+            pip_vulns = sum(len(pkg.get('vulns', [])) for pkg in vulns) if has_vulns else 0
             self.print_summary(pip_vulns, 0, 0, 0)
             return 1 if has_vulns else 0
         
@@ -339,7 +349,8 @@ class SecurityAuditor:
         if not code_only:
             # Run pip-audit (always)
             has_vulns, vulns = self.run_pip_audit(fix=fix)
-            pip_vulns = len(vulns) if has_vulns else 0
+            # Count total vulnerabilities, not just packages
+            pip_vulns = sum(len(pkg.get('vulns', [])) for pkg in vulns) if has_vulns else 0
             
             # Run safety check (optional)
             has_vulns, vulns = self.run_safety_check()
