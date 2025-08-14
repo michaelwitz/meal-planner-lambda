@@ -1,17 +1,17 @@
 services:
   db:
     image: postgres:15-alpine
-    container_name: meal_planner_db
+    container_name: meal_planner_dev_db
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${DEV_POSTGRES_DB}
+      POSTGRES_USER: ${DEV_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${DEV_POSTGRES_PASSWORD}
     ports:
-      - "${POSTGRES_PORT}:5432"  # External port 5455, internal 5432
+      - "${DEV_POSTGRES_PORT}:5432"  # External port 5455, internal 5432
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - dev_postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DEV_POSTGRES_USER} -d ${DEV_POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -22,13 +22,13 @@ services:
     build: 
       context: ./backend
       dockerfile: Dockerfile
-    container_name: meal_planner_backend
+    container_name: meal_planner_backend_dev
     ports:
       - "8088:8088"
     env_file:
       - .env
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      DEV_DATABASE_URL: postgresql://${DEV_POSTGRES_USER}:${DEV_POSTGRES_PASSWORD}@db:5432/${DEV_POSTGRES_DB}
     depends_on:
       db:
         condition: service_healthy
@@ -39,7 +39,7 @@ services:
     command: python -m flask run --host=0.0.0.0 --port=8088 --reload
 
 volumes:
-  postgres_data:
+  dev_postgres_data:
     driver: local
 
 networks:

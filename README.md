@@ -128,7 +128,8 @@ meal-planner-lambda/
 ├── docs/                     # Documentation
 │   └── FunctionalSpecs.md    # Functional specifications
 ├── frontend/                 # React frontend (future)
-├── docker-compose.yml        # Docker services configuration
+├── docker-compose.dev.yml    # Development environment
+├── docker-compose.test.yml   # Test environment
 ├── .env                      # Environment variables (not in git)
 ├── .env.example              # Environment template
 └── README.md                 # This file
@@ -145,22 +146,31 @@ meal-planner-lambda/
 ### Environment Setup
 
 1. Copy `.env.example` to `.env` and update with your values
-2. The default PostgreSQL port is set to 5455 to avoid conflicts
+2. The development PostgreSQL port is set to 5455 to avoid conflicts
+3. The test PostgreSQL port is set to 5456
+
+### Docker Compose Files
+
+- **docker-compose.dev.yml** - Development environment with hot-reload
+- **docker-compose.test.yml** - Test database for running tests
 
 ### Running with Docker
 
 ```bash
-# Start the services
-docker-compose up -d
+# Start development environment
+docker-compose -f docker-compose.dev.yml up -d
 
 # View logs
-docker-compose logs -f
+docker-compose -f docker-compose.dev.yml logs -f
 
 # Stop services
-docker-compose down
+docker-compose -f docker-compose.dev.yml down
+
+# Start test database
+docker-compose -f docker-compose.test.yml up -d
 ```
 
-**Note**: The project name is set to `meal-planner` in the `.env` file to ensure consistent Docker resource naming regardless of the directory name.
+**Note**: The project name is set to `meal-planner` in the `.env` file to ensure consistent Docker resource naming.
 
 ### Quick Start
 
@@ -173,9 +183,9 @@ conda activate meal-planner
 cd backend
 pip install -r requirements.txt
 
-# 3. Start PostgreSQL
+# 3. Start development PostgreSQL
 cd ..
-docker-compose up -d db
+docker-compose -f docker-compose.dev.yml up -d db
 
 # 4. Initialize database
 cd backend
@@ -184,6 +194,20 @@ python scripts/rebuild_db.py
 # 5. Run Flask API (optional)
 flask run
 ```
+
+### Environment Variables
+
+#### Development Database
+- `DEV_DATABASE_URL` - Development database connection string
+- `DEV_POSTGRES_DB` - Development database name
+- `DEV_POSTGRES_USER` - Development database user
+- `DEV_POSTGRES_PASSWORD` - Development database password
+- `DEV_POSTGRES_PORT` - Development database port (default: 5455)
+
+#### Test Databases
+- `TEST_DATABASE_URL_LOCAL` - Local test database (Docker)
+- `TEST_DATABASE_URL_CLOUD` - Cloud test database (AWS Aurora)
+- `TEST_DATABASE_URL` - Active test database (set by test runner)
 
 ### Test Credentials
 

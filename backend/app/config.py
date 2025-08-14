@@ -1,10 +1,13 @@
 """Flask application configuration."""
 
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
+# Load environment variables from .env file in project root
+project_root = Path(__file__).parent.parent.parent  # Go up from app/ to backend/ to project root/
+env_path = project_root / '.env'
+load_dotenv(env_path)
 
 
 class Config:
@@ -15,10 +18,11 @@ class Config:
     if not SECRET_KEY:
         raise ValueError("SECRET_KEY environment variable is not set")
     
-    # Database - REQUIRED
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL')
-    if not SQLALCHEMY_DATABASE_URI:
-        raise ValueError("DATABASE_URL environment variable is not set")
+    # Database - Use DEV_DATABASE_URL (required for development/production)
+    # TestingConfig will override this with TEST_DATABASE_URL
+    SQLALCHEMY_DATABASE_URI = os.getenv('DEV_DATABASE_URL', 'postgresql://placeholder')
+    # Note: We use a placeholder to avoid errors during import when testing
+    # The actual database URL will be set by TestingConfig
     
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO = os.getenv('SQLALCHEMY_ECHO', 'False').lower() == 'true'
@@ -54,11 +58,8 @@ class TestingConfig(Config):
     DEBUG = True
     TESTING = True
     
-    # Override database URL for testing
-    TEST_DATABASE_URL = os.getenv('TEST_DATABASE_URL')
-    if TEST_DATABASE_URL:
-        SQLALCHEMY_DATABASE_URI = TEST_DATABASE_URL
-    # If TEST_DATABASE_URL not set, will use regular DATABASE_URL from parent Config
+    # Override database URL for testing if TEST_DATABASE_URL is set
+    SQLALCHEMY_DATABASE_URI = os.getenv('TEST_DATABASE_URL', Config.SQLALCHEMY_DATABASE_URI)
 
 
 # Configuration dictionary
