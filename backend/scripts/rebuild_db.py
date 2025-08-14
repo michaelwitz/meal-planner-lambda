@@ -1,24 +1,19 @@
 #!/usr/bin/env python3
 """
 Development script to drop, recreate, and seed the database.
-Usage: python scripts/rebuild_db.py
+Usage: 
+    python scripts/rebuild_db.py           # Use default database
+    python scripts/rebuild_db.py --local   # Use local test database
+    python scripts/rebuild_db.py --cloud   # Use cloud test database
 """
 
 import sys
 import os
+import argparse
 from datetime import datetime, date, timedelta
 
 # Add parent directory to path to import app modules
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-from app import create_app
-from app.models.database import db
-from app.models.entities import (
-    User, Food, Meal, FoodUserLikes, UserMeal, MealIngredients,
-    SexEnum, FoodCategoryEnum
-)
-import bcrypt
-from sqlalchemy import text
 
 
 def drop_all_tables():
@@ -621,11 +616,48 @@ def seed_user_meals(users, meals):
     print(f"✓ Seeded {len(user_meals)} user meals")
 
 
-def rebuild_database():
-    """Main function to rebuild the database."""
+def rebuild_database(target=None):
+    """Main function to rebuild the database.
+    
+    Args:
+        target: Database target ('local', 'cloud', or None for default)
+    """
     print("\n" + "="*50)
     print("DATABASE REBUILD SCRIPT")
     print("="*50 + "\n")
+    
+    # If target specified, import and use test database configuration
+    if target in ['local', 'cloud']:
+        from tests.db_config import TestDatabaseConfig
+        database_url = TestDatabaseConfig.get_database_url(target)
+        os.environ['DATABASE_URL'] = database_url
+        print(f"Using {target} database: {TestDatabaseConfig.get_config(target).description}")
+        db_info = f"Database: {target} test database"
+    else:
+        db_info = "Database: development database (port 5455)"
+    
+    # Import app modules after setting DATABASE_URL
+    from app import create_app
+    from app.models.database import db
+    from app.models.entities import (
+        User, Food, Meal, FoodUserLikes, UserMeal, MealIngredients,
+        SexEnum, FoodCategoryEnum
+    )
+    import bcrypt
+    from sqlalchemy import text
+    
+    # Make these available globally for the seed functions
+    globals()['db'] = db
+    globals()['User'] = User
+    globals()['Food'] = Food
+    globals()['Meal'] = Meal
+    globals()['FoodUserLikes'] = FoodUserLikes
+    globals()['UserMeal'] = UserMeal
+    globals()['MealIngredients'] = MealIngredients
+    globals()['SexEnum'] = SexEnum
+    globals()['FoodCategoryEnum'] = FoodCategoryEnum
+    globals()['bcrypt'] = bcrypt
+    globals()['text'] = text
     
     app = create_app('development')
     
@@ -652,7 +684,7 @@ def rebuild_database():
             print("  Admin: admin@mealplanner.com / admin123")
             print("  User1: john.doe@example.com / password123")
             print("  User2: jane.smith@example.com / password123")
-            print("\nDatabase: meal_planner_db on port 5455")
+            print(f"\n{db_info}")
             print("\n")
             
         except Exception as e:
@@ -663,5 +695,43 @@ def rebuild_database():
             sys.exit(1)
 
 
+def main():
+    """Parse arguments and run rebuild."""
+    parser = argparse.ArgumentParser(
+        description='Rebuild database with fresh schema and seed data',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python scripts/rebuild_db.py           # Use default development database
+  python scripts/rebuild_db.py --local   # Use local test database
+  python scripts/rebuild_db.py --cloud   # Use cloud test database
+        """
+    )
+    
+    # Database selection
+    db_group = parser.add_mutually_exclusive_group()
+    db_group.add_argument(
+        '--local',
+        action='store_true',
+        help='Use local test database'
+    )
+    db_group.add_argument(
+        '--cloud',
+        action='store_true',
+        help='Use cloud test database'
+    )
+    
+    args = parser.parse_args()
+    
+    # Determine target
+    target = None
+    if args.local:
+        target = 'local'
+    elif args.cloud:
+        target = 'cloud'
+    
+    rebuild_database(target)
+
+
 if __name__ == '__main__':
-    rebuild_database()
+    main()

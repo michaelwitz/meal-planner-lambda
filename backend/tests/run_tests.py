@@ -50,16 +50,35 @@ def check_database_connections():
 
 def run_tests(args):
     """Run pytest with the specified configuration."""
+    import os
+    from dotenv import load_dotenv
+    from pathlib import Path
+    
+    # Load .env file
+    project_root = Path(__file__).parent.parent.parent
+    env_path = project_root / '.env'
+    load_dotenv(env_path)
+    
+    # Set TEST_DATABASE_URL based on target
+    if args.cloud:
+        cloud_url = os.getenv('TEST_DATABASE_URL_CLOUD')
+        if not cloud_url:
+            print("❌ TEST_DATABASE_URL_CLOUD not found in .env file")
+            return 1
+        os.environ['TEST_DATABASE_URL'] = cloud_url
+        print("🌩️  Running tests with CLOUD database")
+        print(f"   Database: AWS Aurora Serverless PostgreSQL")
+    else:
+        local_url = os.getenv('TEST_DATABASE_URL_LOCAL')
+        if not local_url:
+            print("❌ TEST_DATABASE_URL_LOCAL not found in .env file")
+            return 1
+        os.environ['TEST_DATABASE_URL'] = local_url
+        print("🏠 Running tests with LOCAL database")
+        print(f"   Database: Docker PostgreSQL on port 5456")
+    
     # Build pytest command
     pytest_args = ['pytest']
-    
-    # Add database target
-    if args.cloud:
-        pytest_args.extend(['--db-target=cloud'])
-        print("🌩️  Running tests with CLOUD database")
-    else:
-        pytest_args.extend(['--db-target=local'])
-        print("🏠 Running tests with LOCAL database")
     
     # Add verbose flag
     if args.verbose:

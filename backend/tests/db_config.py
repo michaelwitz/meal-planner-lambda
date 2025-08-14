@@ -18,9 +18,12 @@ import os
 from dataclasses import dataclass
 from typing import Optional
 from dotenv import load_dotenv
+from pathlib import Path
 
-# Load environment variables from .env file (in project root)
-load_dotenv()
+# Load environment variables from .env file in project root (parent directory)
+project_root = Path(__file__).parent.parent.parent  # Go up from tests/ to backend/ to project root/
+env_path = project_root / '.env'
+load_dotenv(env_path)
 
 
 @dataclass

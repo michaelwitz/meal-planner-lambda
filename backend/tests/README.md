@@ -12,15 +12,22 @@ Tests can be run against either a local Docker PostgreSQL database or a cloud AW
 
 ## Database Configuration
 
-### Setting Up Environment Variables
-The test database URLs are configured in your `.env` file in the project root.
+### Environment Variables
+All database URLs are configured in the `.env` file in the project root.
 
-**Required environment variables:**
-- `TEST_DATABASE_URL_LOCAL` - Local Docker PostgreSQL connection string
-- `TEST_DATABASE_URL_CLOUD` - AWS Aurora Serverless PostgreSQL connection string  
+#### Development Database
+- `DEV_DATABASE_URL` - Development database connection (port 5455)
+- Used when running the Flask app locally with `flask run`
+
+#### Test Databases
+- `TEST_DATABASE_URL_LOCAL` - Local Docker test database (port 5456)
+- `TEST_DATABASE_URL_CLOUD` - AWS Aurora cloud test database
+- `TEST_DATABASE_URL` - Active test database (automatically set by test runner)
+
+#### Database Selection
 - `TEST_DB_TARGET` - Default target: `local` or `cloud` (defaults to `local`)
 
-**Note:** The `.env` file is already configured with both local and cloud database connections.
+**Note:** The test runner script (`run_tests.py`) automatically sets `TEST_DATABASE_URL` based on your target selection.
 
 ## Using the Test Runner Script
 
@@ -46,25 +53,23 @@ python tests/run_tests.py --file tests/test_auth.py  # Run specific test file
 
 2. Start the local test database:
    ```bash
+   # From project root
    docker-compose -f docker-compose.test.yml up -d
    ```
 
 ### Run Tests with Local Database
 ```bash
-# Uses local database by default
+# Using the test runner script (recommended)
+python tests/run_tests.py --local
+
+# Or directly with pytest (requires TEST_DATABASE_URL to be set)
 pytest
 
-# Explicitly specify local database
-pytest --db-target=local
-
-# Or use environment variable
-TEST_DB_TARGET=local pytest
-
 # With verbose output
-pytest -v
+python tests/run_tests.py --local --verbose
 
 # With coverage report
-pytest --cov=app --cov-report=term-missing
+python tests/run_tests.py --local --coverage
 ```
 
 ## Running Tests with Cloud Database
@@ -79,17 +84,17 @@ pytest --cov=app --cov-report=term-missing
 
 ### Run Tests with Cloud Database
 ```bash
-# Using command-line option
-pytest --db-target=cloud
-
-# Using environment variable
-TEST_DB_TARGET=cloud pytest
+# Using the test runner script (recommended)
+python tests/run_tests.py --cloud
 
 # With verbose output
-pytest --db-target=cloud -v
+python tests/run_tests.py --cloud --verbose
 
 # Run specific test file with cloud database
-pytest --db-target=cloud tests/test_auth.py -v
+python tests/run_tests.py --cloud --file tests/test_auth.py
+
+# With coverage report
+python tests/run_tests.py --cloud --coverage
 ```
 
 ### ⚠️ Cloud Database Notes
@@ -127,14 +132,20 @@ pytest --cov=app --cov-report=html
 # Open htmlcov/index.html in browser
 ```
 
-## Test Database
-The tests use a separate PostgreSQL database running on port 5456 (configured in `docker-compose.test.yml`).
+## Test Databases
 
-- Database: `meal_planner_test_db`
-- Port: 5456
-- Container: `meal_planner_test_db`
+### Local Test Database (Docker)
+- **Port**: 5456 (different from development port 5455)
+- **Container**: `meal_planner_test_db`
+- **Database**: `meal_planner_test_db`
+- **Docker Compose**: `docker-compose.test.yml`
 
-The test database is automatically cleared and recreated for each test function to ensure test isolation.
+### Cloud Test Database (AWS Aurora)
+- **Type**: AWS Aurora Serverless PostgreSQL
+- **Database**: `meal_planner_test`
+- **Region**: us-east-1
+
+**Note**: Both databases are automatically cleared and recreated for each test function to ensure test isolation.
 
 ## Writing New Tests
 
@@ -167,13 +178,18 @@ docker-compose -f docker-compose.test.yml down
 ```
 
 ## Current Test Status
-✅ **Authentication Tests (12/12 passing)**
+✅ **Authentication Tests (16/16 passing)**
 - User registration with validation
-- Duplicate email/username prevention
+- Duplicate email/username prevention  
 - Password strength validation
+- Missing required fields validation
+- Invalid email format validation
+- Invalid sex value validation
 - Login with email or username
+- Empty credentials handling
 - Invalid credential handling
 - JWT-protected profile endpoint
+- Invalid/missing token handling
 - Logout functionality
 
 ## TODO
