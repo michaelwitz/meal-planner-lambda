@@ -68,6 +68,28 @@ class AuthService:
             raise ValueError("Failed to create user") from e
     
     @staticmethod
+    def register_user_with_token(user_data: UserRegisterSchema) -> tuple[User, str, int]:
+        """
+        Register a new user and generate JWT token for immediate login.
+        
+        Args:
+            user_data: Validated user registration data
+            
+        Returns:
+            Tuple of (User, access_token, expires_in)
+            
+        Raises:
+            ValueError: If username or email already exists
+        """
+        # Register the user
+        user = AuthService.register_user(user_data)
+        
+        # Generate token for immediate login
+        access_token, expires_in = generate_token(user.id)
+        
+        return user, access_token, expires_in
+    
+    @staticmethod
     def authenticate_user(login_data: UserLoginSchema) -> tuple[User, str, int]:
         """
         Authenticate a user and generate JWT token.
