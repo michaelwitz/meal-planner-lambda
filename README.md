@@ -5,6 +5,7 @@ A Flask-based REST API for meal planning with JWT authentication, built with Fla
 ## Documentation
 
 - [Functional Specifications](docs/FunctionalSpecs.md) - Detailed feature requirements and API documentation
+- [Security and Code Quality](docs/SecurityAndCodeQuality.md) - Security practices, tools, and code quality guidelines
 
 ## Tech Stack
 
@@ -126,7 +127,8 @@ meal-planner-lambda/
 │   ├── requirements.txt      # Python dependencies
 │   └── Dockerfile
 ├── docs/                     # Documentation
-│   └── FunctionalSpecs.md    # Functional specifications
+│   ├── FunctionalSpecs.md    # Functional specifications
+│   └── SecurityAndCodeQuality.md # Security and code quality guide
 ├── frontend/                 # React frontend (future)
 ├── docker-compose.dev.yml    # Development environment
 ├── docker-compose.test.yml   # Test environment
