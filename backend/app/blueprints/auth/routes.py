@@ -29,12 +29,8 @@ def register(body: UserRegisterSchema):
         400: Validation error or user already exists
     """
     try:
-        # Register user
-        user = AuthService.register_user(body)
-        
-        # Generate token for immediate login
-        from app.utils.jwt_utils import generate_token
-        access_token, expires_in = generate_token(user.id)
+        # Register user and generate token for immediate login
+        user, access_token, expires_in = AuthService.register_user_with_token(body)
         
         # Create response
         user_response = UserResponseSchema.from_orm(user)
