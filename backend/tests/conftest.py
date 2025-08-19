@@ -1,16 +1,15 @@
 """
-Pytest fixtures for test setup using PostgreSQL test database.
+Pytest fixtures for test setup using local Docker PostgreSQL test database.
 
-The TEST_DATABASE_URL environment variable determines which database to use.
-This is set by the run_tests.py script based on --local or --cloud flags.
+The TEST_DATABASE_URL environment variable is automatically set by the run_tests.py script
+to use the local Docker test database.
 
 Direct pytest usage:
-- Set TEST_DATABASE_URL env var to desired database URL
+- Ensure TEST_DATABASE_URL env var is set to TEST_DATABASE_URL_LOCAL
 - Run: pytest
 
-Using run_tests.py:
-- Local: python run_tests.py --local
-- Cloud: python run_tests.py --cloud
+Using run_tests.py (recommended):
+- python run_tests.py
 """
 
 import pytest
@@ -23,7 +22,7 @@ def app():
     Create a Flask app configured for testing with PostgreSQL.
     
     Uses TEST_DATABASE_URL environment variable which should be set
-    by the run_tests.py script based on --local or --cloud flag.
+    by the run_tests.py script to point to the local Docker test database.
     
     scope='function' means this runs for each test function
     """
@@ -32,7 +31,7 @@ def app():
     from app.models.entities import User
     
     # Create app with test config
-    # The TestingConfig will use TEST_DATABASE_URL which was set by pytest_plugins.py
+    # The TestingConfig will use TEST_DATABASE_URL which was set by run_tests.py
     app = create_app('testing')
     
     # Create tables in test database

@@ -2,12 +2,12 @@
 
 ## Overview
 This directory contains all unit and integration tests for the Meal Planner API.
-Tests can be run against either a local Docker PostgreSQL database or a cloud AWS Aurora database.
+Tests are run against a local Docker PostgreSQL database.
 
 ## Test Structure
 - `conftest.py` - Pytest fixtures and test configuration
-- `db_config.py` - Database configuration for local and cloud testing
-- `run_tests.py` - Convenient test runner script for database selection
+- `db_config.py` - Database configuration for local testing
+- `run_tests.py` - Convenient test runner script
 - `test_auth.py` - Authentication endpoint tests
 
 ## Database Configuration
@@ -19,26 +19,21 @@ All database URLs are configured in the `.env` file in the project root.
 - `DEV_DATABASE_URL` - Development database connection (port 5455)
 - Used when running the Flask app locally with `flask run`
 
-#### Test Databases
+#### Test Database
 - `TEST_DATABASE_URL_LOCAL` - Local Docker test database (port 5456)
-- `TEST_DATABASE_URL_CLOUD` - AWS Aurora cloud test database
 - `TEST_DATABASE_URL` - Active test database (automatically set by test runner)
 
-#### Database Selection
-- `TEST_DB_TARGET` - Default target: `local` or `cloud` (defaults to `local`)
-
-**Note:** The test runner script (`run_tests.py`) automatically sets `TEST_DATABASE_URL` based on your target selection.
+**Note:** The test runner script (`run_tests.py`) automatically sets `TEST_DATABASE_URL` to use the local test database.
 
 ## Using the Test Runner Script
 
-The `run_tests.py` script provides a convenient way to run tests with different databases:
+The `run_tests.py` script provides a convenient way to run tests:
 
 ```bash
 # From the backend directory
-python tests/run_tests.py                    # Run with local database (default)
-python tests/run_tests.py --cloud            # Run with cloud database
-python tests/run_tests.py --check            # Check database connections
-python tests/run_tests.py --cloud --verbose  # Cloud database with verbose output
+python tests/run_tests.py                    # Run all tests
+python tests/run_tests.py --check            # Check database connection
+python tests/run_tests.py --verbose          # Run with verbose output
 python tests/run_tests.py --coverage         # Run with coverage report
 python tests/run_tests.py --file tests/test_auth.py  # Run specific test file
 ```
@@ -57,51 +52,21 @@ python tests/run_tests.py --file tests/test_auth.py  # Run specific test file
    docker-compose -f docker-compose.test.yml up -d
    ```
 
-### Run Tests with Local Database
+### Run Tests
 ```bash
 # Using the test runner script (recommended)
-python tests/run_tests.py --local
+python tests/run_tests.py
 
 # Or directly with pytest (requires TEST_DATABASE_URL to be set)
 pytest
 
 # With verbose output
-python tests/run_tests.py --local --verbose
+python tests/run_tests.py --verbose
 
 # With coverage report
-python tests/run_tests.py --local --coverage
+python tests/run_tests.py --coverage
 ```
 
-## Running Tests with Cloud Database
-
-### Prerequisites
-1. Ensure cloud database credentials are in your `.env` file
-2. Ensure you can connect to the AWS Aurora database
-   ```bash
-   # Test connection (optional)
-   psql -h meal-planner-db.cluster-cczg0cscuj55.us-east-1.rds.amazonaws.com -U postgres_admin -d meal_planner_test
-   ```
-
-### Run Tests with Cloud Database
-```bash
-# Using the test runner script (recommended)
-python tests/run_tests.py --cloud
-
-# With verbose output
-python tests/run_tests.py --cloud --verbose
-
-# Run specific test file with cloud database
-python tests/run_tests.py --cloud --file tests/test_auth.py
-
-# With coverage report
-python tests/run_tests.py --cloud --coverage
-```
-
-### ⚠️ Cloud Database Notes
-- The cloud database will be completely dropped and recreated for each test
-- Make sure this is a dedicated test database, not production
-- Tests may run slower due to network latency
-- Ensure stable internet connection for consistent test results
 
 ### Run Specific Test Files
 ```bash
@@ -132,7 +97,7 @@ pytest --cov=app --cov-report=html
 # Open htmlcov/index.html in browser
 ```
 
-## Test Databases
+## Test Database
 
 ### Local Test Database (Docker)
 - **Port**: 5456 (different from development port 5455)
@@ -140,12 +105,7 @@ pytest --cov=app --cov-report=html
 - **Database**: `meal_planner_test_db`
 - **Docker Compose**: `docker-compose.test.yml`
 
-### Cloud Test Database (AWS Aurora)
-- **Type**: AWS Aurora Serverless PostgreSQL
-- **Database**: `meal_planner_test`
-- **Region**: us-east-1
-
-**Note**: Both databases are automatically cleared and recreated for each test function to ensure test isolation.
+**Note**: The database is automatically cleared and recreated for each test function to ensure test isolation.
 
 ## Writing New Tests
 
